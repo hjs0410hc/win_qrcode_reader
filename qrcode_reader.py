@@ -18,10 +18,10 @@ import mss
 import ctypes
 
 try:
-    from win10toast import ToastNotifier
+    from winotify import Notification
     HAS_WINDOWS_TOAST = True
 except Exception:
-    ToastNotifier = None
+    Notification = None
     HAS_WINDOWS_TOAST = False
 
 # Make application DPI aware for Windows
@@ -351,20 +351,23 @@ class QRCodeReader:
 
         try:
             icon_path = resource_path(os.path.join('asset', 'icon.png'))
-            toast_icon = None
-            if os.path.exists(icon_path) and icon_path.lower().endswith('.ico'):
-                toast_icon = icon_path
-
-            notifier = ToastNotifier()
-            notifier.show_toast(
-                "QR Code Reader",
-                "Ready in the system tray. Right-click to capture a QR code.",
-                icon_path=toast_icon,
-                duration=5,
-                threaded=True
+            
+            # Use absolute path for icon if it exists
+            icon = os.path.abspath(icon_path) if os.path.exists(icon_path) else ''
+            
+            toast = Notification(
+                app_id="QR Code Reader",
+                title="QR Code Reader Started",
+                msg="The application is ready in the system tray.\nRight-click the tray icon to capture QR codes.",
+                icon=icon,
+                duration="long"
             )
-        except Exception as toast_error:
-            print(f"Windows notification failed: {toast_error}")
+            
+            toast.add_actions(label="Got it!", launch="")
+            toast.show()
+        except Exception:
+            # Silently ignore notification errors
+            pass
         
     def run(self):
         """Run the application"""
