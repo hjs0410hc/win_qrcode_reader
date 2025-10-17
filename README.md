@@ -133,7 +133,7 @@ The executable will be created in the `dist` folder.
 - **pyzbar** - QR code decoding
 - **pystray** - System tray icon functionality
 - **mss** - Fast, cross-platform screen capture
-- **win10toast** - Windows 10+ toast notifications for readiness alerts
+- **winotify** - Windows toast notifications for readiness alerts
 - **pyinstaller** - For building standalone executables
 
 ## Platform-Specific Notes
