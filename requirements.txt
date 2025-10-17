@@ -4,3 +4,4 @@ pyzbar>=0.1.9
 pystray>=0.19.5
 mss>=9.0.1
 pyinstaller>=6.0.0
+win10toast>=0.9

@@ -17,6 +17,13 @@ from tkinter import messagebox
 import mss
 import ctypes
 
+try:
+    from win10toast import ToastNotifier
+    HAS_WINDOWS_TOAST = True
+except Exception:
+    ToastNotifier = None
+    HAS_WINDOWS_TOAST = False
+
 # Make application DPI aware for Windows
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(2)  # PROCESS_PER_MONITOR_DPI_AWARE
@@ -25,6 +32,15 @@ except Exception:
         ctypes.windll.user32.SetProcessDPIAware()  # Windows 8.1 and earlier
     except Exception:
         pass  # DPI awareness not available
+
+
+def resource_path(relative_path: str) -> str:
+    """Resolve resource paths for both source and PyInstaller-frozen runs."""
+    if getattr(sys, 'frozen', False):  # PyInstaller adds this flag
+        base_path = sys._MEIPASS  # type: ignore[attr-defined]
+    else:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 
 def get_dpi_scale():
@@ -307,17 +323,14 @@ class QRCodeReader:
         
     def setup_tray(self):
         """Image Load from file or bundled resource (supports PyInstaller)"""
-        def resource_path(relative_path: str) -> str:
-            """Get absolute path to resource, works for dev and for PyInstaller bundle."""
-            if getattr(sys, 'frozen', False):
-                # PyInstaller creates a temp folder and stores path in _MEIPASS
-                base_path = sys._MEIPASS
-            else:
-                base_path = os.path.abspath(".")
-            return os.path.join(base_path, relative_path)
-
         icon_path = resource_path(os.path.join('asset', 'icon.png'))
-        icon_image = Image.open(icon_path)
+        if not os.path.exists(icon_path):
+            raise FileNotFoundError(f"Tray icon image not found: {icon_path}")
+
+        try:
+            icon_image = Image.open(icon_path)
+        except Exception as icon_error:
+            raise RuntimeError(f"Failed to load tray icon image: {icon_path}") from icon_error
         
         menu = pystray.Menu(
             item('Capture QR Code', self.start_capture),
@@ -330,10 +343,33 @@ class QRCodeReader:
             "QR Code Reader",
             menu
         )
+
+    def show_startup_notification(self):
+        """Show a Windows toast notification when the tray icon is ready."""
+        if not (HAS_WINDOWS_TOAST and sys.platform.startswith('win')):
+            return
+
+        try:
+            icon_path = resource_path(os.path.join('asset', 'icon.png'))
+            toast_icon = None
+            if os.path.exists(icon_path) and icon_path.lower().endswith('.ico'):
+                toast_icon = icon_path
+
+            notifier = ToastNotifier()
+            notifier.show_toast(
+                "QR Code Reader",
+                "Ready in the system tray. Right-click to capture a QR code.",
+                icon_path=toast_icon,
+                duration=5,
+                threaded=True
+            )
+        except Exception as toast_error:
+            print(f"Windows notification failed: {toast_error}")
         
     def run(self):
         """Run the application"""
         self.setup_tray()
+        self.show_startup_notification()
         print("QR Code Reader is running in system tray...")
         print("Right-click the tray icon to capture QR codes.")
         self.icon.run()
