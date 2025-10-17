@@ -276,11 +276,10 @@ class QRCodeReader:
                             font=('Arial', 10), padx=20, pady=5, bg='#4CAF50', fg='white')
         copy_btn.pack(side=tk.LEFT, padx=5)
         
-        # Open URL button (only if it looks like a URL)
-        if data.startswith(('http://', 'https://', 'www.')):
-            url_btn = tk.Button(button_frame, text="Open URL", command=open_url,
-                               font=('Arial', 10), padx=20, pady=5, bg='#2196F3', fg='white')
-            url_btn.pack(side=tk.LEFT, padx=5)
+        # Open URL button
+        url_btn = tk.Button(button_frame, text="Open URL", command=open_url,
+                            font=('Arial', 10), padx=20, pady=5, bg='#2196F3', fg='white')
+        url_btn.pack(side=tk.LEFT, padx=5)
         
         # Close button
         close_btn = tk.Button(button_frame, text="Close", command=dialog.destroy,
